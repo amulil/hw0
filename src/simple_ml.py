@@ -48,10 +48,11 @@ def parse_mnist(image_filename, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR CODE
-    with gzip.open(filename, 'rb') as images, gzip.open(filename, 'rb') as labels:
-        X = np.frombuffer(images.read(), np.uint8, offset=16)
-        X = X.reshape(-1, 28 * 28) / np.float32(256)
-        y = np.frombuffer(f.read(), np.uint8, offset=8)
+    # also can use python struct
+    with gzip.open(image_filename, 'rb') as images, gzip.open(label_filename, 'rb') as labels:
+        X = np.frombuffer(images.read(), np.uint8, offset=16).astype(np.float32)
+        X = X.reshape(-1, 28 * 28) / np.float32(255)
+        y = np.frombuffer(labels.read(), np.uint8, offset=8)
         return X, y
     ### END YOUR CODE
 
@@ -72,7 +73,14 @@ def softmax_loss(Z, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
-    pass
+    # Convert Z to probabilities using softmax function
+    P = np.exp(Z) / np.sum(np.exp(Z), axis=1, keepdims=True)
+    # Get the probabilities of the true labels
+    P_true = P[np.arange(len(y)), y]
+    # Compute the negative log-likelihood of the true labels
+    NLL = -np.log(P_true)
+    # Return the average loss over the batch
+    return np.mean(NLL)
     ### END YOUR CODE
 
 
@@ -95,7 +103,21 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    # Get the number of examples and classes
+    num_examples = X.shape[0]
+    num_classes = theta.shape[1]
+    # Loop through batches in X without randomizing the order
+    for i in range(0, num_examples, batch):
+        # Get the current batch of inputs and labels
+        X_batch = X[i:i+batch]
+        y_batch = y[i:i+batch]
+        # Compute the logits for the current batch
+        Z_batch = X_batch @ theta
+        P_batch = np.exp(Z_batch) / np.sum(np.exp(Z_batch), axis=1, keepdims=True)
+        # Compute the gradient of the loss with respect to theta
+        grad_theta = (X_batch.T @ (P_batch - np.eye(num_classes)[y_batch])) / batch
+        # Update theta using SGD rule
+        theta -= lr * grad_theta
     ### END YOUR CODE
 
 
@@ -122,7 +144,21 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    # Get the number of examples and classes
+    num_examples = X.shape[0]
+    num_classes = W2.shape[1]
+    # Loop through batches in X without randomizing the order
+    for i in range(0, num_examples, batch):
+        # Get the current batch of inputs and labels
+        X_batch = X[i:i+batch]
+        y_batch = y[i:i+batch]
+        # Compute the logits for the current batch
+        Z_batch = X_batch @ theta
+        P_batch = np.exp(Z_batch) / np.sum(np.exp(Z_batch), axis=1, keepdims=True)
+        # Compute the gradient of the loss with respect to theta
+        grad_theta = (X_batch.T @ (P_batch - np.eye(num_classes)[y_batch])) / batch
+        # Update theta using SGD rule
+        theta -= lr * grad_theta
     ### END YOUR CODE
 
 
